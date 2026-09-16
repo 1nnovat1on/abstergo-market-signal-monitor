@@ -46,3 +46,12 @@ def resistance(candles, lookback=20):
     if lookback < 1:
         raise ValueError('lookback must be positive')
     return max(candle['high'] for candle in candles[-lookback:])
+
+
+def support(candles, lookback=20):
+    """Lowest low across the most recent closed candles in a lookback window."""
+    if not candles:
+        raise ValueError('no closed candles')
+    if lookback < 1:
+        raise ValueError('lookback must be positive')
+    return min(candle['low'] for candle in candles[-lookback:])

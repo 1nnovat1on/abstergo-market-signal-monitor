@@ -3,7 +3,7 @@ from pathlib import Path
 from urllib.request import urlopen, Request
 from urllib.parse import urlparse
 import json, time
-from indicators import ema, rsi_wilder, classify_rsi, crossed, resistance
+from indicators import ema, rsi_wilder, classify_rsi, crossed, resistance, support
 
 ROOT = Path(__file__).parent
 SYMBOLS = ('BTCUSDT','ETHUSDT')
@@ -17,7 +17,7 @@ def closed_candles(symbol, interval, limit):
         rows = json.load(response)
     now = int(time.time() * 1000)
     return [
-        {'open_time': int(r[0]), 'close_time': int(r[6]), 'high': float(r[2]), 'close': float(r[4])}
+        {'open_time': int(r[0]), 'close_time': int(r[6]), 'high': float(r[2]), 'low': float(r[3]), 'close': float(r[4])}
         for r in rows if int(r[6]) < now
     ]
 
@@ -41,16 +41,16 @@ def fetch(symbol, interval):
 def chart_data(symbol):
     candles = closed_candles(symbol, '5m', 96)
     if len(candles) < 2: raise ValueError('Not enough closed chart candles')
-    four_hour = closed_candles(symbol, '4h', 21)
+    one_hour = closed_candles(symbol, '1h', 21)
     daily = closed_candles(symbol, '1d', 21)
     return {
         'interval': '5m',
         'points': [{'time': c['close_time'], 'close': c['close']} for c in candles],
-        'resistance': {
-            '4h': resistance(four_hour, 20),
-            '1d': resistance(daily, 20),
+        'levels': {
+            '1h': {'support': support(one_hour, 20), 'resistance': resistance(one_hour, 20)},
+            '1d': {'support': support(daily, 20), 'resistance': resistance(daily, 20)},
         },
-        'lookback': {'4h_candles': 20, '1d_candles': 20},
+        'lookback': {'1h_candles': 20, '1d_candles': 20},
     }
 
 def chart_payload(symbol):
